@@ -106,21 +106,6 @@ class App extends React.Component<IProps, IState> {
     if (!nftContract || !provider || !imageUrl) return;
 
     // TODO: implement this
-
-    try {
-      const feeInGas = await nftContract.estimateGas.mintNFT(imageUrl, {
-        customData: {
-          feeToken: feeToken.address,
-        },
-      });
-      const gasPriceInUnits = await provider.getGasPrice(feeToken.address);
-      const mintingFees = ethers.utils.formatUnits(
-        feeInGas.mul(gasPriceInUnits),
-        feeToken.decimals
-      );
-
-      this.setState({ mintingFees });
-    } catch (_) {}
   }
 
   async fetchAllowance() {
