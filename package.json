@@ -1,0 +1,23 @@
+{
+  "name": "nft-display",
+  "version": "1.0.0",
+  "scripts": {
+    "generate-private-key": "ts-node gen-priv-key.ts",
+    "build": "yarn hardhat compile",
+    "deploy": "yarn hardhat deploy-zksync",
+    "copy-abis": "ts-node copy-abis"
+  },
+  "author": "32byte <xlebedenko@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@matterlabs/hardhat-zksync-deploy": "^0.1.5",
+    "@matterlabs/hardhat-zksync-solc": "^0.3.0",
+    "@openzeppelin/contracts": "^4.5.0",
+    "@types/node": "^17.0.23",
+    "ethers": "^5.6.2",
+    "hardhat": "^2.9.2",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3",
+    "zksync-web3": "^0.4.0"
+  }
+}
