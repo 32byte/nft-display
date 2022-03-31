@@ -1,9 +1,7 @@
 import { Contract, Web3Provider } from 'zksync-web3';
 
-// TODO: adjust if needed
 const ABI = require('./NFT.json');
 
 export default function getNFTContract(provider: Web3Provider) {
-  // TODO: fill this out
-  return new Contract('NFT_CONTRACT_ADDRESS', ABI, provider.getSigner());
+  return new Contract('0xc2Bc9961A8D71B4e784b9227aFe3Ef12d2af0E26', ABI, provider.getSigner());
 }

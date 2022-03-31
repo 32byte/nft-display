@@ -1,9 +1,7 @@
 import { Contract, Web3Provider } from 'zksync-web3';
 
-// TODO: adjust if needed
 const ABI = require('./Display.json');
 
 export default function getDisplayContract(provider: Web3Provider) {
-  // TODO: fill this out
-  return new Contract('DISPLAY_CONTRACT_ADDRESS', ABI, provider.getSigner());
+  return new Contract('0x40850C538129B3DeC54A54cc0eAc7a7D333f78A9', ABI, provider.getSigner());
 }

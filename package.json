@@ -5,7 +5,8 @@
     "generate-private-key": "ts-node gen-priv-key.ts",
     "build": "yarn hardhat compile",
     "deploy": "yarn hardhat deploy-zksync",
-    "copy-abis": "ts-node copy-abis"
+    "copy-abis": "ts-node copy-abis",
+    "withdraw": "ts-node withdraw.ts"
   },
   "author": "32byte <xlebedenko@gmail.com>",
   "license": "MIT",

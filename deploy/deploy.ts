@@ -6,12 +6,10 @@ import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 // you can generate one using `yarn generate-private-key`
 // make sure to request funds from the faucet to pay the deploy fees
 // you can do that at portal.zksync.io
-// TODO: fill in your private key
 const PRIVATE_KEY = 'YOUR_PRIVATE_KEY';
 
 // USDC: 0xd35CCeEAD182dcee0F148EbaC9447DA2c4D449c4
 //  DAI: 0x5C221E77624690fff6dd741493D735a17716c26B
-// TODO: specify the token you want to pay deploy fees in
 const FEE_TOKEN = '0x5C221E77624690fff6dd741493D735a17716c26B';
 
 // contract interface 
@@ -23,7 +21,15 @@ interface CONTRACT {
 }
 // contracts to be deployed
 const CONTRACTS: CONTRACT[] = [
-  // TODO: enter contracts
+  {
+    name: 'Display',
+    // the token address in which we accept payments
+    args: ['0x5C221E77624690fff6dd741493D735a17716c26B']
+  },
+  {
+    name: 'NFT',
+    args: []
+  }
 ]
 
 // this function will deploy both contracts at the same time.

@@ -69,7 +69,6 @@ class App extends React.Component<IProps, IState> {
     super(props);
 
     this.state = {
-      // TODO: adjust this if needed
       feeToken: {
         symbol: 'DAI',
         address: '0x5C221E77624690fff6dd741493D735a17716c26B',
@@ -90,35 +89,73 @@ class App extends React.Component<IProps, IState> {
   async loadNft() {
     const { provider, displayContract, nftContract } = this.state;
     if (!provider || !displayContract || !nftContract) return;
-
-    // TODO: implement
+  
+    try {
+      // get data from display contract
+      const id = (await displayContract.tokenId()).toString();
+      const payment = BigInt(await displayContract.payment());
+      // get data from the nft contract depending on the id
+      const uri = await nftContract.tokenURI(id);
+  
+      // update state
+      this.setState({ nft: { uri, id, payment } });
+    } catch (_) {}
   }
 
   async mint() {
     const { nftContract, imageUrl, feeToken } = this.state;
     if (!nftContract) return;
-
-    // TODO: implement
+  
+    try {
+      // mint the nft
+      const txHandle = await nftContract.mintNFT(imageUrl, {
+        // set the custom feeToken
+        customData: {
+          feeToken: feeToken.address,
+        },
+      });
+  
+      // send notification to user that the transaction is pending
+      this.nfTransactionPending();
+  
+      // wait for transaction to be mined
+      const res = await txHandle.wait();
+      // res stores the transaction metadata,
+      // where we can extract the newly generated tokenId from
+      // console.log(res) to figure out how to get the tokenId
+      const tokenId = res.events[1].args[2];
+  
+      // send notification to user that everything went well
+      this.nfTransactionSuccess(
+        'NFT minted successfully!',
+        `Your NFT with the id=${tokenId} was minted!`
+      );
+    } catch (_) {
+      // send notification to user that something went wrong
+      this.nfTransactionFailed();
+    }
   }
 
   async estimateMintingFees() {
     const { nftContract, imageUrl, feeToken, provider } = this.state;
     if (!nftContract || !provider || !imageUrl) return;
 
-    // TODO: implement this
-
     try {
+      // get the fees
       const feeInGas = await nftContract.estimateGas.mintNFT(imageUrl, {
         customData: {
           feeToken: feeToken.address,
         },
       });
+      // get gas price
       const gasPriceInUnits = await provider.getGasPrice(feeToken.address);
+      // convert to full coin
       const mintingFees = ethers.utils.formatUnits(
         feeInGas.mul(gasPriceInUnits),
         feeToken.decimals
       );
-
+      
+      // update state
       this.setState({ mintingFees });
     } catch (_) {}
   }
@@ -128,21 +165,75 @@ class App extends React.Component<IProps, IState> {
     const { account } = this.context;
     if (!provider || !displayContract || !erc20Contract) return;
 
-    // TODO: implement this
+    try {
+      // get the allowance
+      const allowance = await erc20Contract.allowance(account, displayContract.address);
+      // update state if allowance changed
+      if (allowance != this.state.allowance)
+        this.setState({ allowance });
+    } catch (_) {}
   }
 
   async approve() {
     const { provider, erc20Contract, displayContract, paymentAmount, feeToken, paymentToken } = this.state;
     if (!provider || !displayContract || !erc20Contract || !paymentAmount) return;
 
-    // TODO: implement this
+    try {
+      // send the approve transaction
+      const txHandle = await erc20Contract.approve(displayContract.address, paymentAmount.toString(), {
+        customData: {
+          feeToken: feeToken.address,
+        },
+      });
+  
+      // send notification to user that the transaction is pending
+      this.nfTransactionPending();
+  
+      // wait for transaction to be mined
+      const _ = await txHandle.wait();
+  
+      // send notification to user that everything went well
+      this.nfTransactionSuccess(
+        'Approval successful!',
+        `You approved ${ethers.utils.formatUnits(paymentAmount, paymentToken.decimals)} ${
+          paymentToken.symbol
+        }!`
+      );
+      
+      // update allowance
+      this.fetchAllowance();
+    } catch (_) {
+      // send notification to user that something went wrong
+      this.nfTransactionFailed();
+    }
   }
 
   async estimateApproveFees() {
     const { provider, erc20Contract, displayContract, paymentAmount, feeToken, paymentToken } = this.state;
     if (!provider || !displayContract || !erc20Contract || !paymentAmount) return;
 
-    // TODO: implement this
+    try {
+      // get the fees
+      const feeInGas = await erc20Contract.estimateGas.approve(
+        displayContract.address,
+        paymentAmount.toString(),
+        {
+          customData: {
+            feeToken: feeToken.address,
+          },
+        }
+      );
+      // get gas price
+      const gasPriceInUnits = await provider.getGasPrice(feeToken.address);
+      // convert to full coins
+      const approveFees = ethers.utils.formatUnits(
+        feeInGas.mul(gasPriceInUnits),
+        feeToken.decimals
+      );
+      
+      // update state
+      this.setState({ approveFees });
+    } catch (_) {}
   }
 
   async promote() {
@@ -163,14 +254,60 @@ class App extends React.Component<IProps, IState> {
       return;
     }
 
-    // TODO: implement this
+    try {
+      // send the promote transaction
+      const txHandle = await displayContract.promote(paymentAmount.toString(), tokenId, {
+        customData: {
+          feeToken: feeToken.address,
+        },
+      });
+  
+      // send notification to user that the transaction is pending
+      this.nfTransactionPending();
+  
+      // wait for transaction to be mined
+      const _ = await txHandle.wait();
+  
+      // send notification to user that everything went well
+      this.nfTransactionSuccess(
+        'Promotion successful!',
+        `You promoted NFT #${tokenId} for ${ethers.utils.formatUnits(
+          paymentAmount,
+          paymentToken.decimals
+        )} ${paymentToken.symbol}!`
+      );
+  
+      // force state update
+      this.fetchAllowance();
+      this.loadNft();
+    } catch (_) {
+      // send notification to user that something went wrong
+      this.nfTransactionFailed();
+    }
   }
 
   async estimatePromoteFees() {
     const { provider, displayContract, paymentAmount, feeToken, tokenId } = this.state;
     if (!provider || !displayContract || !paymentAmount || !tokenId) return;
 
-    // TODO: implement this
+    try {
+      // get the fees
+      const feeInGas = await displayContract.estimateGas.promote(paymentAmount.toString(), tokenId, {
+        customData: {
+          feeToken: feeToken.address,
+        },
+      });
+      // get gas price
+      const gasPriceInUnits = await provider.getGasPrice(feeToken.address);
+      // convert to full coins
+      const promoteFees = ethers.utils.formatUnits(
+        feeInGas.mul(gasPriceInUnits),
+        feeToken.decimals
+      );
+  
+      // update state
+      this.setState({ promoteFees });
+    } catch (_) {}
   }
 
   // notification helper functions
