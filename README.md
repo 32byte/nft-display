@@ -4,3 +4,5 @@ This repository contains the template and solution for the [blog](https://medium
 
 
 Solutions can be found [here](https://github.com/32byte/nft-display/tree/solution).
+
+A completed version with modified ui can be found [here](https://nft-pedestal.vercel.app/)
