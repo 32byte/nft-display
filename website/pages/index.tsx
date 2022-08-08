@@ -19,6 +19,8 @@ import React from 'react';
 import getNFTContract from '../contracts/NFT';
 import { BigNumber, ethers } from 'ethers';
 import getDisplayContract from '../contracts/Display';
+import { Provider } from "zksync-web3";
+
 
 // props interface
 interface IProps {
@@ -70,13 +72,13 @@ class App extends React.Component<IProps, IState> {
 
     this.state = {
       feeToken: {
-        symbol: 'DAI',
-        address: '0x5C221E77624690fff6dd741493D735a17716c26B',
+        symbol: 'loadsOnMount',
+        address: 'loadsOnMount',
         decimals: 18,
       },
       paymentToken: {
-        symbol: 'DAI',
-        address: '0x5C221E77624690fff6dd741493D735a17716c26B',
+        symbol: 'loadsOnMount',
+        address: 'loadsOnMount',
         decimals: 18,
       },
 
@@ -93,6 +95,7 @@ class App extends React.Component<IProps, IState> {
     try {
       // get data from display contract
       const id = (await displayContract.tokenId()).toString();
+      console.log("loading NFT", (await displayContract.tokenId()).toString())
       const payment = BigInt(await displayContract.payment());
       // get data from the nft contract depending on the id
       const uri = await nftContract.tokenURI(id);
@@ -108,12 +111,13 @@ class App extends React.Component<IProps, IState> {
   
     try {
       // mint the nft
+      console.log("minting with ", feeToken.address)
       const txHandle = await nftContract.mintNFT(imageUrl, {
         // set the custom feeToken
         customData: {
           feeToken: feeToken.address,
         },
-      });
+      })
   
       // send notification to user that the transaction is pending
       this.nfTransactionPending();
@@ -130,8 +134,9 @@ class App extends React.Component<IProps, IState> {
         'NFT minted successfully!',
         `Your NFT with the id=${tokenId} was minted!`
       );
-    } catch (_) {
+    } catch (err) {
       // send notification to user that something went wrong
+      console.log("Mint failed", err)
       this.nfTransactionFailed();
     }
   }
@@ -257,6 +262,7 @@ class App extends React.Component<IProps, IState> {
     try {
       // send the promote transaction
       const txHandle = await displayContract.promote(paymentAmount.toString(), tokenId, {
+        // set the custom feeToken
         customData: {
           feeToken: feeToken.address,
         },
@@ -353,14 +359,31 @@ class App extends React.Component<IProps, IState> {
     this.estimatePromoteFees();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     const provider = new Web3Provider(this.context.ethereum);
+
+    var zksyncProvider = new Provider('https://zksync2-testnet.zksync.dev');
+    //const L1_DAI_ADDRESS = "0xe68104d83e647b7c1c15a91a8d8aad21a51b3b3e"
+    const L1_USDC_ADDRESS = "0xd35cceead182dcee0f148ebac9447da2c4d449c4"
+    const L2_FEE_TOKEN = await zksyncProvider.l2TokenAddress(L1_USDC_ADDRESS)
+
+    this.setState({
+      feeToken: {
+        symbol: "USDC",
+        address: L2_FEE_TOKEN,
+        decimals: 6 // 18 for DAI
+      },
+      paymentToken: {
+        symbol: "USDC",
+        address: L2_FEE_TOKEN,
+        decimals: 6 // 18 for DAI
+      }
+    });
+    
     const displayContract = getDisplayContract(provider);
     const nftContract = getNFTContract(provider);
     const erc20Contract = new Contract(this.state.paymentToken.address, zkUtils.IERC20, provider.getSigner());
-
     const intervalId = setInterval(() => this.update(), 10000);
-
     this.setState({
       provider,
       nftContract,
@@ -519,7 +542,7 @@ class App extends React.Component<IProps, IState> {
                   />
                   <TextInput
                     label="Payment amount"
-                    value={ethers.utils.formatUnits(paymentAmount, paymentToken.decimals)}
+                    // value=ethers.utils.formatUnits(paymentAmount, paymentToken.decimals)}
                     onChange={(e) => {
                       try {
                         this.setState({
